@@ -1,0 +1,40 @@
+{
+  "name": "claude-default-group",
+  "displayName": "Claude Default Group",
+  "description": "Keeps Claude Code tabs in the first editor group and clears editor group locks.",
+  "version": "0.1.2",
+  "publisher": "markhahn",
+  "repository": { "type": "git", "url": "https://github.com/mark-hahn/claude-def-grp.git" },
+  "license": "MIT",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "extensionKind": ["ui", "workspace"],
+  "contributes": {
+    "commands": [
+      { "command": "claudeDefaultGroup.moveClaudeTabs", "title": "Claude Default Group: Move Claude Tabs to First Group" },
+      { "command": "claudeDefaultGroup.unlockAllGroups", "title": "Claude Default Group: Unlock All Editor Groups" }
+    ],
+    "configuration": {
+      "title": "Claude Default Group",
+      "properties": {
+        "claudeDefaultGroup.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Move Claude Code tabs into the first editor group when they open, and unlock groups."
+        },
+        "claudeDefaultGroup.unlockOnGroupChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Unlock the active editor group whenever editor groups are added, removed or switched."
+        },
+        "claudeDefaultGroup.delayMs": {
+          "type": "number",
+          "default": 0,
+          "description": "Milliseconds to wait after a Claude tab opens before moving it, so Claude Code's own lock lands on the group that is about to be emptied and removed."
+        }
+      }
+    }
+  }
+}
