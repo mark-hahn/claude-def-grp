@@ -1,8 +1,8 @@
 {
   "name": "claude-default-group",
   "displayName": "Claude Default Group",
-  "description": "Keeps Claude Code tabs in the first editor group and clears editor group locks.",
-  "version": "0.1.2",
+  "description": "Moves a newly opened Claude Code tab into the first editor group and clears editor group locks.",
+  "version": "0.1.3",
   "publisher": "markhahn",
   "repository": { "type": "git", "url": "https://github.com/mark-hahn/claude-def-grp.git" },
   "license": "MIT",
@@ -22,7 +22,7 @@
         "claudeDefaultGroup.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Move Claude Code tabs into the first editor group when they open, and unlock groups."
+          "description": "Move a Claude Code tab into the first editor group when it has just been opened, and unlock groups. Tabs restored with the window or dragged to another group by hand are left where they are."
         },
         "claudeDefaultGroup.unlockOnGroupChange": {
           "type": "boolean",
@@ -31,8 +31,9 @@
         },
         "claudeDefaultGroup.delayMs": {
           "type": "number",
-          "default": 0,
-          "description": "Milliseconds to wait after a Claude tab opens before moving it, so Claude Code's own lock lands on the group that is about to be emptied and removed."
+          "default": 100,
+          "minimum": 100,
+          "description": "Milliseconds to wait after a Claude tab opens before moving it. At least 100, the settle time needed to tell a newly opened tab from one dragged between groups."
         }
       }
     }
