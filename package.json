@@ -1,8 +1,8 @@
 {
   "name": "claude-default-group",
   "displayName": "Claude Default Group",
-  "description": "Moves a newly opened Claude Code tab into the first editor group and clears editor group locks.",
-  "version": "0.1.3",
+  "description": "Moves a newly opened Claude Code tab into the first editor group.",
+  "version": "0.1.4",
   "publisher": "markhahn",
   "repository": { "type": "git", "url": "https://github.com/mark-hahn/claude-def-grp.git" },
   "license": "MIT",
@@ -13,8 +13,7 @@
   "extensionKind": ["ui", "workspace"],
   "contributes": {
     "commands": [
-      { "command": "claudeDefaultGroup.moveClaudeTabs", "title": "Claude Default Group: Move Claude Tabs to First Group" },
-      { "command": "claudeDefaultGroup.unlockAllGroups", "title": "Claude Default Group: Unlock All Editor Groups" }
+      { "command": "claudeDefaultGroup.moveClaudeTabs", "title": "Claude Default Group: Move Claude Tabs to First Group" }
     ],
     "configuration": {
       "title": "Claude Default Group",
@@ -22,12 +21,7 @@
         "claudeDefaultGroup.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Move a Claude Code tab into the first editor group when it has just been opened, and unlock groups. Tabs restored with the window or dragged to another group by hand are left where they are."
-        },
-        "claudeDefaultGroup.unlockOnGroupChange": {
-          "type": "boolean",
-          "default": true,
-          "description": "Unlock the active editor group whenever editor groups are added, removed or switched."
+          "description": "Move a Claude Code tab into the first editor group when it has just been opened. Tabs restored with the window or dragged to another group by hand are left where they are."
         },
         "claudeDefaultGroup.delayMs": {
           "type": "number",

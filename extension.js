@@ -83,25 +83,17 @@ async function moveToFirstGroup(tab) {
   return true;
 }
 
-async function unlockActive() {
-  try {
-    await run('workbench.action.unlockEditorGroup');
-  } catch (e) {
-    log(`unlock failed: ${e}`);
-  }
-}
-
 // A group emptied by a move normally closes itself (workbench.editor.closeEmptyGroups).
-// If one is left behind, unlock it and close it.
+// If one is left behind, close it.
 async function closeEmptyGroups() {
   for (let i = 0; i < 8; i++) {
     const empty = groups().find((g) => g.tabs.length === 0);
     if (!empty) return;
     if (!(await focusGroup(empty.viewColumn))) return;
-    await unlockActive();
     await run('workbench.action.closeGroup');
     await sleep(30);
   }
+  if (groups().some((g) => g.tabs.length === 0)) log('an empty group could not be closed');
 }
 
 // Everything that shuffles focus and groups runs one job at a time.
@@ -128,21 +120,11 @@ async function tidy(reason, tabs) {
       await focusGroup(FIRST);
       log(`${reason}: moved ${moved} Claude tab(s) to group 1`);
     }
-    await unlockActive();
   } catch (e) {
     log(`${reason}: ${e && e.stack ? e.stack : e}`);
   } finally {
     inFlight.clear();
   }
-}
-
-async function unlockAllGroups() {
-  const start = activeGroup().viewColumn;
-  for (const g of groups()) {
-    if (await focusGroup(g.viewColumn)) await unlockActive();
-  }
-  await focusGroup(start);
-  log('unlocked every editor group');
 }
 
 // Claude tabs that just appeared outside the first group, waiting for the settle period.
@@ -179,14 +161,7 @@ function activate(context) {
     vscode.commands.registerCommand('claudeDefaultGroup.moveClaudeTabs', () =>
       serialize(() => tidy('command', claudeTabsOutsideFirst()))
     ),
-    vscode.commands.registerCommand('claudeDefaultGroup.unlockAllGroups', () => serialize(unlockAllGroups)),
-
-    vscode.window.tabGroups.onDidChangeTabs(onTabsChanged),
-
-    vscode.window.tabGroups.onDidChangeTabGroups(() => {
-      if (!cfg('enabled', true) || !cfg('unlockOnGroupChange', true)) return;
-      setTimeout(unlockActive, delayMs());
-    })
+    vscode.window.tabGroups.onDidChangeTabs(onTabsChanged)
   );
 
   // Tabs restored with the window stay where they were; only newly opened tabs are moved.
