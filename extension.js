@@ -8,10 +8,13 @@ const FIRST = vscode.ViewColumn.One;
 // A tab dragged (or moved by command) between groups reaches an extension as an "opened"
 // event in the target group followed by a separate "closed" event in the source group.
 // A tab Claude Code has just created only ever produces the "opened" event. So a Claude
-// tab that appears outside the first group is held for the configured delay; if no
-// matching close arrives, it was newly opened and gets moved. The delay can never go
-// below this settle time: the setting declares it as its minimum, and it is clamped here
-// in case a smaller value reaches settings.json by hand.
+// tab that has just appeared is held for the configured delay; if no matching close
+// arrives, it was newly opened. One that sits outside the first group gets moved there.
+// One that already sits in the first group is left in place, but that group gets
+// unlocked: when the first group is the only group and it is empty, VS Code opens the
+// panel there instead of in a new column, and Claude Code then locks it. The delay can
+// never go below this settle time: the setting declares it as its minimum, and it is
+// clamped here in case a smaller value reaches settings.json by hand.
 const MIN_DELAY_MS = 100;
 const delayMs = () => Math.max(MIN_DELAY_MS, Number(cfg('delayMs', MIN_DELAY_MS)) || 0);
 
@@ -96,6 +99,14 @@ async function closeEmptyGroups() {
   if (groups().some((g) => g.tabs.length === 0)) log('an empty group could not be closed');
 }
 
+// The tab groups API does not expose lock state, so the first group is unlocked blindly;
+// unlocking an unlocked group does nothing.
+async function unlockFirstGroup() {
+  if (!(await focusGroup(FIRST))) return false;
+  await run('workbench.action.unlockEditorGroup');
+  return true;
+}
+
 // Everything that shuffles focus and groups runs one job at a time.
 let chain = Promise.resolve();
 function serialize(job) {
@@ -109,17 +120,22 @@ const inFlight = new Set();
 async function tidy(reason, tabs) {
   if (!cfg('enabled', true)) return;
   let moved = 0;
+  let inFirst = 0;
   for (const t of tabs) inFlight.add(t);
   try {
     for (const tab of tabs) {
-      if (!isOpen(tab) || tab.group.viewColumn === FIRST) continue;
+      if (!isOpen(tab)) continue;
+      if (tab.group.viewColumn === FIRST) {
+        inFirst++;
+        continue;
+      }
       if (await moveToFirstGroup(tab)) moved++;
     }
     if (moved) {
       await closeEmptyGroups();
-      await focusGroup(FIRST);
       log(`${reason}: moved ${moved} Claude tab(s) to group 1`);
     }
+    if ((moved || inFirst) && (await unlockFirstGroup())) log(`${reason}: unlocked group 1`);
   } catch (e) {
     log(`${reason}: ${e && e.stack ? e.stack : e}`);
   } finally {
@@ -127,7 +143,7 @@ async function tidy(reason, tabs) {
   }
 }
 
-// Claude tabs that just appeared outside the first group, waiting for the settle period.
+// Claude tabs that just appeared, waiting for the settle period.
 let candidates = [];
 let settleTimer;
 
@@ -143,7 +159,7 @@ function onTabsChanged(e) {
     log(`"${t.label}" was moved to another group by hand; leaving it there`);
   }
 
-  const fresh = e.opened.filter((t) => isClaudeTab(t) && t.group.viewColumn !== FIRST);
+  const fresh = e.opened.filter(isClaudeTab);
   if (!fresh.length) return;
   candidates.push(...fresh);
   const wait = delayMs();
@@ -164,7 +180,7 @@ function activate(context) {
     vscode.window.tabGroups.onDidChangeTabs(onTabsChanged)
   );
 
-  // Tabs restored with the window stay where they were; only newly opened tabs are moved.
+  // Tabs restored with the window stay where they were; only newly opened tabs are handled.
   log('activated');
 }
 

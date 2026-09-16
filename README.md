@@ -4,7 +4,10 @@ A small VS Code extension that keeps newly opened Claude Code tabs in the first 
 
 The Claude Code extension opens a tab from its sidebar in a new editor column of its own.
 This extension moves that tab into the first editor group at the moment it is opened, so it
-sits with your other tabs, and lets the emptied group close.
+sits with your other tabs, and lets the emptied group close. When the first group is the only
+group and has no tabs, VS Code opens the Claude tab there directly and Claude Code locks the
+group; the extension then unlocks it, so files you open afterwards join it instead of
+spawning a split.
 
 Only tabs that have just been opened are moved. Tabs restored with the window stay where
 they were, and a Claude tab you drag to another group stays there. To gather every Claude
